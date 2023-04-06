@@ -103,7 +103,7 @@ class NBTBuffer(Buffer):
 
     def consume_integer(self, tag_id, size, nameless=False):
         length, name = self.get_name(nameless)
-        payload = int.from_bytes(self.read(size), "big")
+        payload = int.from_bytes(self.read(size), "big", signed=True)
 
         return tag.Tag(tag_id, length, name, payload)
 
