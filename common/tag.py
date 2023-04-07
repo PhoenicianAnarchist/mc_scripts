@@ -133,10 +133,10 @@ class Tag:
     @staticmethod
     def to_json(t, j={}):
         if t.tag_id in TagID.flat_json:
-            n = f"{TagID.to_string(t.tag_id)}:{t.name}"
+            n = f"{t.name}"
             j[n] = t.payload
         elif t.tag_id in TagID.nested_json:
-            n = f"{TagID.to_string(t.tag_id)}:{t.name}"
+            n = f"{t.name}"
             j[n] = {}
             a = j[n]
             for x in t.payload:

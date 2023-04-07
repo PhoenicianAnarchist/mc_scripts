@@ -1,9 +1,10 @@
 import gzip
+import zlib
 import sys
 
 def get_format(target_format, suffix_hint):
     if target_format == "auto":
-        if suffix_hint in [".nbt", ".dat"]:
+        if suffix_hint in [".nbt", ".dat", ".zlib"]:
             return suffix_hint.strip(".")
         else:
             print(f"Unknown suffix: {suffix_hint}")
@@ -23,11 +24,19 @@ def read_gzip(filepath):
         data = f.read()
     return data
 
+def read_zlib(filepath):
+    data = ""
+    with open(filepath, "rb") as f:
+        data = zlib.decompress(f.read())
+    return data
+
 def read(filepath, format):
     if format == "nbt":
         data = read_raw(filepath)
     elif format == "dat":
         data = read_gzip(filepath)
+    elif format == "zlib":
+        data = read_zlib(filepath)
     else:
         print(f"Unknown format: {format}")
         sys.exit(1)

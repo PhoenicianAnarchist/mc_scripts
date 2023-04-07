@@ -27,6 +27,15 @@ class Buffer:
 
         return self.data[b:e]
 
+    def seek(self, pos):
+        if pos >= self.length:
+            self.p = self.length
+            self.eof = True
+        else:
+            self.p = pos
+
+        return (not self.eof)
+
     def read(self, count):
         data = self.peek(count)
         self.p = self.p + count
