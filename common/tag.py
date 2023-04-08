@@ -49,15 +49,7 @@ class TagID:
         Long,
         Float,
         Double,
-        Byte_Array,
         String
-    ]
-
-    nested_json = [
-        List,
-        Compound,
-        Int_Array,
-        Long_Array
     ]
 
     @staticmethod
@@ -74,8 +66,9 @@ class Tag:
         self.length = length
         self.name = name
         self.payload = payload
-
         self.list_type = list_type
+
+        self.filename = None
 
     def json(self):
         return Tag.to_json(self)
@@ -135,7 +128,16 @@ class Tag:
         if t.tag_id in TagID.flat_json:
             n = f"{t.name}"
             j[n] = t.payload
-        elif t.tag_id in TagID.nested_json:
+        elif t.tag_id == TagID.Byte_Array:
+            n = f"{t.name}"
+            j[n] = f"[{len(t.payload)} bytes] @ {t.filename}"
+        elif t.tag_id in [TagID.List, TagID.Int_Array, TagID.Long_Array]:
+            n = f"{t.name}"
+            j[n] = []
+            a = j[n]
+            for x in t.payload:
+                Tag.to_json_unnamed(x, a)
+        elif t.tag_id == TagID.Compound:
             n = f"{t.name}"
             j[n] = {}
             a = j[n]
@@ -145,5 +147,25 @@ class Tag:
             print(f"Json Unimplemented Tag: {TagID.to_string(t.tag_id)}")
             sys.exit(1)
 
-
         return j
+
+    @staticmethod
+    def to_json_unnamed(t, j=[]):
+        if t.tag_id in TagID.flat_json:
+            j.append(t.payload)
+        elif t.tag_id == TagID.Byte_Array:
+            j.append(f"[{len(t.payload)} bytes] @ {t.filename}")
+        elif t.tag_id in [TagID.List, TagID.Int_Array, TagID.Long_Array]:
+            for x in t.payload:
+                Tag.to_json_unnamed(x, j)
+        elif t.tag_id == TagID.Compound:
+            n = f"{t.name}"
+            a = {}
+            for x in t.payload:
+                Tag.to_json(x, a)
+            j.append(a)
+        else:
+            print(f"Json Unimplemented Tag: {TagID.to_string(t.tag_id)}")
+            sys.exit(1)
+
+            return j

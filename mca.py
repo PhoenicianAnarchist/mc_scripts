@@ -10,10 +10,12 @@ from common import buffer
 from common import tag
 from common import util
 
-## ~/.local/share/multimc/instances/Create- Above and Beyond/.minecraft/saves/March/region
+# Example path: ~/.local/share/multimc/instances/<instance name>/.minecraft/saves/<save name>
 parser = argparse.ArgumentParser()
 
 parser.add_argument("filepath")
+parser.add_argument("--output_dir", default="./data/mca")
+parser.add_argument("--verbose", action="store_true")
 
 args = parser.parse_args()
 
@@ -30,6 +32,9 @@ class Chunk:
             self.data = zlib.decompress(payload)
         elif compression_type == 3:
             self.data = payload
+        else:
+            print(f"{x} {z} {timestamp}")
+            raise ValueError(f"Invalid compression type {compression_type}")
 
 def get_chunk(x, z, buf):
     index = ((x & 31) + (z & 31) * 32)
@@ -38,6 +43,11 @@ def get_chunk(x, z, buf):
     buf.seek(index_offset)
     sector_offset = int.from_bytes(buf.read(3), "big")
     sector_count = int.from_bytes(buf.read(1), "big")
+
+    if sector_offset == sector_count == 0:
+        # chunk not yet populated
+        return None
+
     buf.seek(index_offset + 4096)
     timestamp = int.from_bytes(buf.read(4), "big")
 
@@ -55,47 +65,52 @@ def to_index(offset, count):
     return o, c
 
 filepath = pathlib.Path(args.filepath).resolve()
-filename = filepath.stem
-suffix = filepath.suffix
-_, region_x, region_z = filename.split(".")
+save_name = filepath.name
+filepath /= "region"
 
-zlib_dir = util.new_path(filepath, f"zlib/r.{region_x}.{region_z}", ".zlib", mkdir=True).parent
-bin_dir = util.new_path(filepath, f"bin/r.{region_x}.{region_z}", ".bin", mkdir=True).parent
-data = util.read_raw(filepath)
+output_dir = pathlib.Path(args.output_dir).resolve()
+output_dir /= save_name
 
-buf = buffer.Buffer(data, bin_dir)
+for region_filepath in filepath.iterdir():
+    region_name = region_filepath.stem
+    _, region_x, region_z = region_name.split(".")
+    print(f"Parsing region {region_name}")
 
-index_table = buf.read(4096)
-timestamp_table = buf.read(4096)
+    bin_dir = output_dir / f"bin/r.{region_x}.{region_z}"
+    if not bin_dir.is_dir():
+        bin_dir.mkdir(parents=True)
 
-index_buffer = buffer.Buffer(index_table, bin_dir)
-timestamp_buffer = buffer.Buffer(timestamp_table, bin_dir)
+    json_dir = output_dir / f"json/r.{region_x}.{region_z}"
+    if not json_dir.is_dir():
+        json_dir.mkdir(parents=True)
 
-for x in range(32):
-    for z in range(32):
-        chunk = get_chunk(x, z, buf)
+    data = util.read_raw(region_filepath)
+    buf = buffer.Buffer(data, bin_dir)
 
-        nbt = buffer.NBTBuffer(chunk.data, bin_dir)
+    index_table = buf.read(4096)
+    timestamp_table = buf.read(4096)
 
-        j = nbt.root.json()
+    index_buffer = buffer.Buffer(index_table, bin_dir)
+    timestamp_buffer = buffer.Buffer(timestamp_table, bin_dir)
 
-        structures = j[""]["Level"]["Structures"]["Starts"]
-        for k, v in structures.items():
-            if v["id"] == "INVALID":
+    for x in range(32):
+        for z in range(32):
+            if args.verbose:
+                print(f"  Parsing chunk {x}, {z} ", end="")
+            chunk = get_chunk(x, z, buf)
+
+            if chunk is None:
+                if args.verbose:
+                    print("-> not populated")
                 continue
 
-            chunk_x = v["ChunkX"]
-            chunk_z = v["ChunkZ"]
+            nbt = buffer.NBTBuffer(chunk.data, bin_dir)
+            j = nbt.root.json()
+            xpos = j[""]["Level"]["xPos"]
+            zpos = j[""]["Level"]["zPos"]
 
-            try:
-                structure_x = v["Children"]["None"]["PosX"]
-                structure_y = v["Children"]["None"]["PosY"]
-                structure_z = v["Children"]["None"]["PosZ"]
-            except KeyError:
-                structure_x = chunk_x * 16
-                structure_y = -1
-                structure_z = chunk_z * 16
-
-            r = f"r.{region_x}.{region_z}"
-            c = f"c.{chunk_x}.{chunk_z}"
-            print(f"X{structure_x:>6}, Y{structure_y:>4}, Z{structure_z:>6} ({r:<10}, {c:<10}) {k}")
+            if args.verbose:
+                print(f"@ {xpos} {zpos}")
+            json_path = json_dir / f"c.{xpos}.{zpos}.json"
+            with open(json_path, "w") as f:
+                json.dump(j, f, indent=2)
