@@ -130,9 +130,11 @@ class NBTBuffer(Buffer):
         with open(filepath, "wb") as f:
             f.write(data)
 
-        payload = filename
+        payload = data
 
-        return tag.Tag(tag.TagID.Byte_Array, length, name, payload)
+        t = tag.Tag(tag.TagID.Byte_Array, length, name, payload)
+        t.filename = filename
+        return t
 
     def consume_string(self, nameless=False):
         length, name = self.get_name(nameless)
