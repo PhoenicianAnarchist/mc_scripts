@@ -58,11 +58,7 @@ format = util.get_format(args.format, suffix)
 data = util.read(filepath, format)
 
 if filepath != nbt_path:
-    with open(nbt_path, "wb") as f:
-        f.write(data)
+    util.write(nbt_path, data, "wb")
 
 hexer = Hexer(data, width=16)
-with open(hex_path, "w") as f:
-    for line in hexer:
-        f.write(line)
-        f.write('\n')
+util.write(hex_path, "\n".join([line for line in hexer]))
