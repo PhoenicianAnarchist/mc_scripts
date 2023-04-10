@@ -5,10 +5,9 @@ from . import tag
 from . import util
 
 class Buffer:
-    def __init__(self, data, bin_dir=None):
+    def __init__(self, data):
         self.data = data
         self.length = len(data)
-        self.bin_dir = bin_dir
 
         self.reset()
 
@@ -53,7 +52,9 @@ class Buffer:
 
 class NBTBuffer(Buffer):
     def __init__(self, data, bin_dir=None):
-        super().__init__(data, bin_dir)
+        super().__init__(data)
+        self.bin_dir = bin_dir
+
         self.__next__()
 
     def __iter__(self):
@@ -142,8 +143,7 @@ class NBTBuffer(Buffer):
         filename = f"Byte_Array.{self.p}.hex"
         filepath = self.bin_dir / filename
 
-        with open(filepath, "wb") as f:
-            f.write(data)
+        util.write(filepath, data, "wb")
 
         t = tag.Tag(tag.TagID.Byte_Array, length, name, data)
         t.filename = filename
