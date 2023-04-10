@@ -140,16 +140,15 @@ for region_filepath in filepath.iterdir():
                 continue
 
             nbt = buffer.NBTBuffer(chunk.data)
-            j = nbt.root.to_json()
-            xpos = j["Level"]["xPos"]
-            zpos = j["Level"]["zPos"]
+            j = nbt.root.to_json()[""]["Level"]
+            xpos = j["xPos"]
+            zpos = j["zPos"]
 
             if args.verbose:
                 print(f"@ {xpos} {zpos}")
 
-
             min_structures = {}
-            structures = j["Level"]["Structures"]["Starts"]
+            structures = j["Structures"]["Starts"]
             for k, v in structures.items():
                 if v["id"] == "INVALID":
                     continue
@@ -181,8 +180,8 @@ for region_filepath in filepath.iterdir():
                 "Chunk": {
                     "x": xpos,
                     "z": zpos,
-                    # "TileEntities": j["Level"]["TileEntities"],
-                    # "Entities": j["Level"]["Entities"],
+                    # "TileEntities": j["TileEntities"],
+                    # "Entities": j["Entities"],
                     "Structures": min_structures
                 }
             }

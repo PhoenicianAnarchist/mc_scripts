@@ -25,5 +25,5 @@ data = util.read(filepath, format)
 
 p = buffer.NBTBuffer(data, bin_dir)
 
-j = tag.Tag._to_json(p.root)
+j = p.root.to_json()
 util.write(json_path, json.dumps(j, indent=2))

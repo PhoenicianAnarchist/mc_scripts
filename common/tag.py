@@ -121,8 +121,7 @@ class Tag:
         return s
 
     def to_json(self):
-        j = Tag._to_json(self)
-        return j[""]
+        return Tag._to_json(self)
 
     @staticmethod
     def _to_json(t, j={}):
