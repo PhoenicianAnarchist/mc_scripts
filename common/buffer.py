@@ -5,7 +5,7 @@ from . import tag
 from . import util
 
 class Buffer:
-    def __init__(self, data, bin_dir):
+    def __init__(self, data, bin_dir=None):
         self.data = data
         self.length = len(data)
         self.bin_dir = bin_dir
@@ -52,7 +52,7 @@ class Buffer:
 
 
 class NBTBuffer(Buffer):
-    def __init__(self, data, bin_dir):
+    def __init__(self, data, bin_dir=None):
         super().__init__(data, bin_dir)
         self.__next__()
 
@@ -131,18 +131,23 @@ class NBTBuffer(Buffer):
     def consume_byte_array(self, nameless=False):
         length, name = self.get_name(nameless)
         payload_length = int.from_bytes(self.read(4), "big")
+        data = self.read(payload_length)
 
-        filename = f"ByteArray.{self.p}.hex"
+        if self.bin_dir is None:
+            t = tag.Tag(tag.TagID.Byte_Array, length, name, b"")
+            t.filename = ""
+
+            return t
+
+        filename = f"Byte_Array.{self.p}.hex"
         filepath = self.bin_dir / filename
 
-        data = self.read(payload_length)
         with open(filepath, "wb") as f:
             f.write(data)
 
-        payload = data
-
-        t = tag.Tag(tag.TagID.Byte_Array, length, name, payload)
+        t = tag.Tag(tag.TagID.Byte_Array, length, name, data)
         t.filename = filename
+
         return t
 
     def consume_string(self, nameless=False):
