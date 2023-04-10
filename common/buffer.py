@@ -5,10 +5,9 @@ from . import tag
 from . import util
 
 class Buffer:
-    def __init__(self, data, bin_dir):
+    def __init__(self, data):
         self.data = data
         self.length = len(data)
-        self.bin_dir = bin_dir
 
         self.reset()
 
@@ -27,6 +26,15 @@ class Buffer:
 
         return self.data[b:e]
 
+    def seek(self, pos):
+        if pos >= self.length:
+            self.p = self.length
+            self.eof = True
+        else:
+            self.p = pos
+
+        return (not self.eof)
+
     def read(self, count):
         data = self.peek(count)
         self.p = self.p + count
@@ -43,8 +51,10 @@ class Buffer:
 
 
 class NBTBuffer(Buffer):
-    def __init__(self, data, bin_dir):
-        super().__init__(data, bin_dir)
+    def __init__(self, data, bin_dir=None):
+        super().__init__(data)
+        self.bin_dir = bin_dir
+
         self.__next__()
 
     def __iter__(self):
@@ -122,18 +132,22 @@ class NBTBuffer(Buffer):
     def consume_byte_array(self, nameless=False):
         length, name = self.get_name(nameless)
         payload_length = int.from_bytes(self.read(4), "big")
+        data = self.read(payload_length)
 
-        filename = f"ByteArray.{self.p}.hex"
+        if self.bin_dir is None:
+            t = tag.Tag(tag.TagID.Byte_Array, length, name, b"")
+            t.filename = ""
+
+            return t
+
+        filename = f"Byte_Array.{self.p}.hex"
         filepath = self.bin_dir / filename
 
-        data = self.read(payload_length)
-        with open(filepath, "wb") as f:
-            f.write(data)
+        util.write(filepath, data, "wb")
 
-        payload = data
-
-        t = tag.Tag(tag.TagID.Byte_Array, length, name, payload)
+        t = tag.Tag(tag.TagID.Byte_Array, length, name, data)
         t.filename = filename
+
         return t
 
     def consume_string(self, nameless=False):

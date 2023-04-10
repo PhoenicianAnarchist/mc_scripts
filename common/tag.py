@@ -70,9 +70,6 @@ class Tag:
 
         self.filename = None
 
-    def json(self):
-        return Tag.to_json(self)
-
     def to_string(self, indent=0):
         s = f"Unimplemented output for id {self.tag_id}"
         if self.tag_id in TagID.Numeric:
@@ -123,8 +120,12 @@ class Tag:
 
         return s
 
+    def to_json(self):
+        j = Tag._to_json(self)
+        return j[""]
+
     @staticmethod
-    def to_json(t, j={}):
+    def _to_json(t, j={}):
         if t.tag_id in TagID.flat_json:
             n = f"{t.name}"
             j[n] = t.payload
@@ -136,13 +137,13 @@ class Tag:
             j[n] = []
             a = j[n]
             for x in t.payload:
-                Tag.to_json_unnamed(x, a)
+                Tag._to_json_unnamed(x, a)
         elif t.tag_id == TagID.Compound:
             n = f"{t.name}"
             j[n] = {}
             a = j[n]
             for x in t.payload:
-                Tag.to_json(x, a)
+                Tag._to_json(x, a)
         else:
             print(f"Json Unimplemented Tag: {TagID.to_string(t.tag_id)}")
             sys.exit(1)
@@ -150,19 +151,19 @@ class Tag:
         return j
 
     @staticmethod
-    def to_json_unnamed(t, j=[]):
+    def _to_json_unnamed(t, j=[]):
         if t.tag_id in TagID.flat_json:
             j.append(t.payload)
         elif t.tag_id == TagID.Byte_Array:
             j.append(f"[{len(t.payload)} bytes] @ {t.filename}")
         elif t.tag_id in [TagID.List, TagID.Int_Array, TagID.Long_Array]:
             for x in t.payload:
-                Tag.to_json_unnamed(x, j)
+                Tag._to_json_unnamed(x, j)
         elif t.tag_id == TagID.Compound:
             n = f"{t.name}"
             a = {}
             for x in t.payload:
-                Tag.to_json(x, a)
+                Tag._to_json(x, a)
             j.append(a)
         else:
             print(f"Json Unimplemented Tag: {TagID.to_string(t.tag_id)}")
