@@ -43,10 +43,13 @@ def read(filepath, format):
 
     return data
 
+def write(filepath, data, mode="w"):
+    if not filepath.parent.is_dir():
+        filepath.parent.mkdir(parents=True)
+
+    with open(filepath, mode) as f:
+        f.write(data)
+
 def new_path(filepath, dir, suffix, mkdir=False):
-    p = (filepath.parent.parent / dir / filepath.name).with_suffix(suffix)
-
-    if (mkdir) and (not p.parent.is_dir()):
-        p.parent.mkdir(parents=True)
-
-    return p
+    p = filepath.parent.parent / dir / filepath.name
+    return p.with_suffix(suffix)
