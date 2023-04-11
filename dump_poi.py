@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("filepath")
 parser.add_argument("--output_dir", default="./data/mca")
 parser.add_argument("-v", "--verbose", action="store_true")
+parser.add_argument("-q", "--quiet", action="store_true")
 
 args = parser.parse_args()
 
@@ -23,14 +24,14 @@ filepath /= "poi"
 
 output_dir = pathlib.Path(args.output_dir).resolve()
 output_dir /= save_name
-output_dir /= "poi"
 
 poi_data = []
 
-for region_filepath in filepath.iterdir():
+for region_filepath in sorted(filepath.iterdir()):
     region_name = region_filepath.stem
     _, region_x, region_z = region_name.split('.')
-    print(f"Parsing region {region_name}")
+    if not args.quiet:
+        print(f"Parsing region {region_name}")
 
     data = util.read_raw(region_filepath)
     buf = buffer.Buffer(data)
@@ -41,12 +42,12 @@ for region_filepath in filepath.iterdir():
     index_buffer = buffer.Buffer(index_table)
     timestamp_buffer = buffer.Buffer(timestamp_table)
 
-    for x in range(32):
-        for z in range(32):
+    for chunk_x in range(32):
+        for chunk_z in range(32):
             if args.verbose:
-                print(f"  Parsing chunk {x}, {z} ", end="")
+                print(f"  Parsing chunk {chunk_x}, {chunk_z} ", end="")
 
-            chunk_data = chunk.get_chunk(x, z, buf)
+            chunk_data = chunk.get_chunk(chunk_x, chunk_z, buf)
 
             if chunk_data is None:
                 if args.verbose:
@@ -61,15 +62,20 @@ for region_filepath in filepath.iterdir():
 
             for section, data in j.items():
                 records = data["Records"]
+                r = []
 
-                print(f"Section {section}: {len(records)} records")
                 for record in records:
                     name = record["type"]
-                    x, y, z = record["pos"]
+                    x_pos, y_pos, z_pos = record["pos"]
 
-                    p = poi.POI(region_name, name, 0, 0, x, y, z)
-                    poi_data.append(p)
+                    p = poi.POI(
+                        region_name, name,
+                        chunk_x, chunk_z,
+                        x_pos, y_pos, z_pos
+                    )
 
-                    print(p)
+                    r.append(p)
+
+                poi_data.append(r)
 
 util.write(output_dir / "poi.json", json.dumps(poi_data, indent=2, cls=poi.POIJSONEncoder))
