@@ -49,7 +49,3 @@ def write(filepath, data, mode="w"):
 
     with open(filepath, mode) as f:
         f.write(data)
-
-def new_path(filepath, dir, suffix, mkdir=False):
-    p = filepath.parent.parent / dir / filepath.name
-    return p.with_suffix(suffix)

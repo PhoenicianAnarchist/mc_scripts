@@ -55,7 +55,7 @@ class NBTBuffer(Buffer):
         super().__init__(data)
         self.bin_dir = bin_dir
 
-        self.__next__()
+        self.root = self.__next__()
 
     def __iter__(self):
         return self
@@ -69,8 +69,8 @@ class NBTBuffer(Buffer):
         if tag_id == tag.TagID.End:
             raise StopIteration
 
-        self.root = self.consume_tag(tag_id)
-        return self.root
+        root = self.consume_tag(tag_id)
+        return root
 
     def get_name(self, nameless):
         if nameless:
