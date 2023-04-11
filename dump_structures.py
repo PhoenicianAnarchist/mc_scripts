@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("filepath")
 parser.add_argument("--output_dir", default="./data/mca")
 parser.add_argument("-v", "--verbose", action="store_true")
+parser.add_argument("-q", "--quiet", action="store_true")
 
 args = parser.parse_args()
 
@@ -27,12 +28,11 @@ output_dir /= "region"
 
 structure_data = []
 
-for region_filepath in filepath.iterdir():
+for region_filepath in sorted(filepath.iterdir()):
     region_name = region_filepath.stem
     _, region_x, region_z = region_name.split('.')
-    print(f"Parsing region {region_name}")
-
-    json_dir = output_dir / f"json/{region_x}/{region_z}"
+    if not args.quiet:
+        print(f"Parsing region {region_name}")
 
     data = util.read_raw(region_filepath)
     buf = buffer.Buffer(data)
@@ -43,11 +43,12 @@ for region_filepath in filepath.iterdir():
     index_buffer = buffer.Buffer(index_table)
     timestamp_buffer = buffer.Buffer(timestamp_table)
 
-    for x in range(32):
-        for z in range(32):
+    for chunk_x in range(32):
+        for chunk_z in range(32):
             if args.verbose:
-                print(f"  Parsing chunk {x}, {z} ", end="")
-            chunk_data = chunk.get_chunk(x, z, buf)
+                print(f"  Parsing chunk {chunk_x}, {chunk_z} ", end="")
+
+            chunk_data = chunk.get_chunk(chunk_x, chunk_z, buf)
 
             if chunk_data is None:
                 if args.verbose:
@@ -62,47 +63,29 @@ for region_filepath in filepath.iterdir():
             if args.verbose:
                 print(f"@ {xpos} {zpos}")
 
-            min_structures = {}
             structures = j["Structures"]["Starts"]
+
             for k, v in structures.items():
                 if v["id"] == "INVALID":
                     continue
 
-                s = {
-                    "Children": []
+                r = {
+                    "name": v["id"],
+                    "chunk_x": chunk_x,
+                    "chunk_z": chunk_z,
+                    "children": []
                 }
+
                 for child in v["Children"]:
-                    c = {
-                        "id": child["id"],
-                        "x": child.get("PosX", x * 16),
-                        "y": child.get("PosY", 0),
-                        "z": child.get("PosZ", z * 16)
-                    }
+                    p = poi.POISmall(
+                        child.get("id", k),
+                        child.get("PosX", chunk_x * 16),
+                        child.get("PosY", 0),
+                        child.get("PosZ", chunk_z * 16)
+                    )
 
-                    s["Children"].append(c)
+                    r["children"].append(p)
 
-                min_structures[k] = s
-                child_0 = s["Children"][0]
-                p = poi.POI(
-                    region_name, k,
-                    x, z,
-                    child_0["x"], child_0["y"], child_0["z"]
-                )
-                print(p)
-                structure_data.append(p)
+                structure_data.append(r)
 
-            min_json = {
-                "Chunk": {
-                    "x": xpos,
-                    "z": zpos,
-                    # "TileEntities": j["TileEntities"],
-                    # "Entities": j["Entities"],
-                    "Structures": min_structures
-                }
-            }
-
-            if len(min_structures) >= 1:
-                json_path = json_dir / f"c.{x}.{z}.json"
-                util.write(json_path, json.dumps(min_json, indent=2))
-
-util.write(output_dir / "structures.json", json.dumps(structure_data, indent=2, cls=poi.POIJSONEncoder))
+    util.write(output_dir / f"{region_name}.json", json.dumps(structure_data, indent=2, cls=poi.POIJSONEncoder))

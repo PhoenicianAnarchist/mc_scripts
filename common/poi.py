@@ -32,6 +32,26 @@ class POI:
             "z": self.z
         }
 
+class POISmall:
+    def __init__(self, name, x, y, z):
+        self.name = name
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def __str__(self):
+        s = "X{:>6}, Y{:>4}, Z{:>6} {}"
+
+        return s.format(self.x, self.y, self.z, self.name)
+
+    def to_json(self):
+        return {
+            "name": self.name,
+            "x": self.x,
+            "y": self.y,
+            "z": self.z
+        }
+
 class POIJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         return obj.to_json()
