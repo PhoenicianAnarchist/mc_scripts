@@ -18,6 +18,11 @@ Automatically detects file format from extension, but format can be specified:
 - `nbt`: uncompressed
 - `dat`: compressed with gzip
 
+## chunk_extractor
+
+Extracts chunk data and converts to JSON.
+Specific regions and chunks can be specified, otherwise all will be extracted.
+
 ## dump_structures
 
 Parses region files within a save and extracts structure types and locations.
