@@ -15,6 +15,19 @@ def xz_from_64(long):
 
     return x_value, z_value
 
+def unpack_heightmap(long):
+    vals = []
+
+    for i in range(7):
+        vals.append(long & 0b111111111)
+        long >>= 9
+        
+    return vals
+
+def range_map(x, fa, fb, ta, tb):
+    scale = float(x - fa) / (fb - fa)
+    return ta + (scale * (tb - ta))
+
 def get_format(target_format, suffix_hint):
     if target_format == "auto":
         if suffix_hint in [".nbt", ".dat", ".zlib"]:
