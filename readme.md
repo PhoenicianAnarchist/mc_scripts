@@ -2,31 +2,31 @@
 
 Various scripts to example and manipulate minecraft save data.
 
-## nbt2hex
-
-A simple hex dumper.
-
-Automatically detects file format from extension, but format can be specified:
-- `nbt`: uncompressed
-- `dat`: compressed with gzip
-
-## nbt2json
-
-Converts an NBT file to JSON.
-
-Automatically detects file format from extension, but format can be specified:
-- `nbt`: uncompressed
-- `dat`: compressed with gzip
+Versions tested:
+- Java 1.16.5 (2586)
 
 ## chunk_extractor
 
 Extracts chunk data and converts to JSON.
 Specific regions and chunks can be specified, otherwise all will be extracted.
 
-## dump_structures
+## structure_extractor
 
-Parses region files within a save and extracts structure types and locations.
+Parses JSON files saved by `chunk_extractor` and extracts structure types and locations.
+Specific regions and chunks can be specified, otherwise all will be extracted.
 
-## dump_poi
+## poi_extractor
 
-Parses poi files within a save and extracts poi types and locations.
+Parses JSON files saved by `chunk_extractor` and extracts poi types and locations.
+Specific regions and chunks can be specified, otherwise all will be extracted.
+
+## region_heightmap
+
+Parses JSON files saved by `chunk_extractor` and extracts heightmap data.
+Saves individual files for each region.
+
+## level_heightmap
+
+Parses JSON files saved by `chunk_extractor` and extracts heightmap data.
+Saves a single file containing all regions.
+Regions can be specified in order to regenerate heightmap data (requires `--force` flag)
