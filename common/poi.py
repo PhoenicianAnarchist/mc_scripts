@@ -39,6 +39,18 @@ class POISmall:
         self.y = y
         self.z = z
 
+    def __eq__(self, other):
+        if self.name != other.name:
+            return False
+        if self.x != other.x:
+            return False
+        if self.y != other.y:
+            return False
+        if self.z != other.z:
+            return False
+
+        return True
+
     def __str__(self):
         s = "X{:>6}, Y{:>4}, Z{:>6} {}"
 

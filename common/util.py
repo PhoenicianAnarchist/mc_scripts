@@ -2,6 +2,19 @@ import gzip
 import zlib
 import sys
 
+def xz_from_64(long):
+    x_sign  = (long >> 31) & 0x1
+    x_value =  long        & 0x7fffffff
+    z_sign  = (long >> 63) & 0x1
+    z_value = (long >> 32) & 0x7fffffff
+
+    if x_sign:
+        x_value -= (1 << 31)
+    if z_sign:
+        z_value -= (1 << 31)
+
+    return x_value, z_value
+
 def get_format(target_format, suffix_hint):
     if target_format == "auto":
         if suffix_hint in [".nbt", ".dat", ".zlib"]:
