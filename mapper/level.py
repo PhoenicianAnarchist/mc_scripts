@@ -30,9 +30,15 @@ class Level:
         else:
             self.chunk_list = chunk_list
 
+    def unpack_heightmap_data(self, heightmap="OCEAN_FLOOR"):
+        self.logger.info(f"Unpacking heightmap for {self.name}")
+
+        for region in self.region_list:
+            region.unpack_heightmap_data(heightmap)
+
     def generate_heightmap(self, heightmap="OCEAN_FLOOR"):
         img_w, img_h = self.get_map_size()
-        self.image = Image.new("L", (img_w, img_h))
+        self.heightmap = Image.new("L", (img_w, img_h))
         self.logger.info(f"Generating heightmap for {self.name}")
 
         for region in self.region_list:
@@ -50,7 +56,29 @@ class Level:
             rx = (region_x - self.min_x) * 512
             rz = (region_z - self.min_z) * 512
             self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
-            self.image.paste(r.image, (rx, rz))
+            self.heightmap.paste(r.heightmap, (rx, rz))
+
+    def generate_colourmap(self, heightmap="OCEAN_FLOOR"):
+        img_w, img_h = self.get_map_size()
+        self.colourmap = Image.new("RGB", (img_w, img_h))
+        self.logger.info(f"Generating heightmap for {self.name}")
+
+        for region in self.region_list:
+            region_name = region.name
+            self.logger.debug(f"Generating region {region_name}")
+
+            region_x, region_z = [int(x) for x in region_name.split(".")[1:]]
+
+            r = Region(self.json_dir, region_x, region_z, self.chunk_list)
+            m = r.generate_colourmap(heightmap)
+            if m is None:
+                self.logger.warning(f"Skipping region {region_name}")
+                continue
+
+            rx = (region_x - self.min_x) * 512
+            rz = (region_z - self.min_z) * 512
+            self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
+            self.colourmap.paste(r.colourmap, (rx, rz))
 
     def get_map_size(self):
         self.logger.info(f"Calculating map size...")
