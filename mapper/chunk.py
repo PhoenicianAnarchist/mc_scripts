@@ -92,6 +92,21 @@ class Chunk:
 
                 try:
                     block = sections.get(x, y, z)
+                    # Note: "temporary" bug fix, investigate this
+                    # heightmap sometimes selects air block?
+                    # sometimes (above water?) block is way too high??
+                    if block not in colour_mapping.transparent:
+                        self.logger.debug(f"Block at ({x}, {y}, {z}) == {block}")
+                    else:
+                        self.logger.debug(f"Transparent block returned {block}")
+                        n = 0
+                        while block in colour_mapping.transparent:
+                            n += 1
+                            block = sections.get(x, y - n, z)
+                            self.logger.debug(f"Next block ({y}-{n}) == {block}")
+
+                        self.logger.debug(f"Block at ({x}, {y-n}, {z}) == {block}")
+
                     self.colour_map_data.append(block)
                 except IndexError as e:
                     r = f"r.{self.region_x}.{self.region_z}"

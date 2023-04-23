@@ -1,34 +1,32 @@
 import logging
+import json
+
+from . import colourmaps
 
 class ColourMap:
     map = {
         "DEFAULT": (255, 50, 255),
-        "ERROR": (50, 255, 255),
-        "minecraft:air": (0, 0, 0),
+        "ERROR": (50, 255, 255)
     }
+
+    transparent = []
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        woods = [
-            ["oak", (181, 146, 91), (76, 59, 34), (43, 61, 29)]
-        ]
+        for maps in colourmaps.maps:
+            self.map.update(maps.map)
+            self.transparent.extend(maps.transparent)
 
-        for wood, planks, log, leaves in woods:
-            self.map[f"minecraft:{wood}_button"] = planks
-            self.map[f"minecraft:{wood}_door"] = planks
-            self.map[f"minecraft:{wood}_fence"] = planks
-            self.map[f"minecraft:{wood}_fence_gate"] = planks
-            self.map[f"minecraft:{wood}_leaves"] = leaves
-            self.map[f"minecraft:{wood}_log"] = log
-            self.map[f"minecraft:{wood}_planks"] = planks
-            self.map[f"minecraft:{wood}_pressure_plate"] = planks
-            self.map[f"minecraft:{wood}_sapling"] = leaves
-            self.map[f"minecraft:{wood}_sign"] = planks
-            self.map[f"minecraft:{wood}_slab"] = planks
-            self.map[f"minecraft:{wood}_stairs"] = planks
-            self.map[f"minecraft:{wood}_trapdoor"] = planks
-            self.map[f"minecraft:{wood}_wood"] = log
+        new_transparent = []
+        for t in self.transparent:
+            if t not in self.map:
+                new_transparent.append(t)
+
+        self.logger.debug(f"Colour Map ({len(self.map)})\n{json.dumps(self.map, indent=2)}")
+        self.logger.debug(f"Transparent ({len(self.transparent)})\n{json.dumps(self.transparent, indent=2)}")
+        self.transparent = new_transparent
+        self.logger.debug(f"New Transparent ({len(self.transparent)})\n{json.dumps(self.transparent, indent=2)}")
 
     def __getitem__(self, key):
         if key not in ColourMap.map:
