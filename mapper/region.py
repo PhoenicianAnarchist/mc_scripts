@@ -41,6 +41,13 @@ class Region:
         for chunk in self.chunks:
             chunk_name = f"{chunk.chunk_x}, {chunk.chunk_z}"
             self.logger.debug(f"Generating chunk {chunk_name}")
+
+            try:
+                chunk.generate_heightmap(heightmap)
+            except IndexError as e:
+                self.logger.error(f"Chunk generation failed {chunk_name}")
+                continue
+
             cx = chunk.chunk_x * 16
             cz = chunk.chunk_z * 16
             self.logger.debug(f"Pasting chunk {chunk_name} at {cx}, {cz}")
@@ -60,7 +67,7 @@ class Region:
             chunk_name = f"{chunk.chunk_x}, {chunk.chunk_z}"
             self.logger.debug(f"Generating chunk {chunk_name}")
             try:
-                chunk.generate_colourmap(colour_mapping)
+                chunk.generate_colourmap(colour_mapping, heightmap)
             except IndexError as e:
                 self.logger.error(f"Chunk generation failed {chunk_name}")
                 continue

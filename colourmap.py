@@ -19,7 +19,7 @@ parser.add_argument("-r", "--regions", nargs="*")
 parser.add_argument("-c", "--chunks", nargs="*")
 parser.add_argument("--force", action="store_true")
 parser.add_argument("--loglevel", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], default="WARNING")
-parser.add_argument("--heightmap", choices=["OCEAN_FLOOR", "WORLD_SURFACE", "MOTION_BLOCKING"], default="OCEAN_FLOOR")
+parser.add_argument("--heightmap", choices=["OCEAN_FLOOR", "WORLD_SURFACE", "MOTION_BLOCKING"], default="WORLD_SURFACE")
 args = parser.parse_args()
 
 ## create log file
@@ -53,22 +53,17 @@ logger.debug(f"json_dir == {json_dir}")
 
 output_dir = args.output_dir.expanduser().resolve()
 output_dir /= save_name
+output_dir /= "colourmaps"
 logger.debug(f"output_dir == {output_dir}")
 
 if not output_dir.exists():
     output_dir.mkdir(parents=True)
 
-output_path = output_dir / "colourmap.png"
+output_path = output_dir / f"{args.heightmap}.png"
 logger.debug(f"output_path == {output_path}")
 if output_path.exists() and not args.force:
     logger.info(f"Skipping map for {save_name}: already generated")
     sys.exit(0)
-
-
-if args.chunks is None:
-    chunk_list = [f"{x}.{z}" for x in range(32) for z in range(32)]
-else:
-    chunk_list = args.chunks
 
 logger.info(f"Generating colourmap {args.heightmap} for {save_name}")
 level_map = mapper.level.Level(
@@ -81,5 +76,5 @@ logger.debug(f"calling generate_colourmap()")
 colourmap = mapper.colour_map.ColourMap()
 level_map.generate_colourmap(colourmap, args.heightmap)
 
-logger.debug(f"saving colourmap for {save_name}")
+logger.debug(f"saving colourmap {args.heightmap} for {save_name}")
 level_map.colourmap.save(output_path)

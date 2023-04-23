@@ -13,6 +13,7 @@ class Chunk:
         self.region_z = region_z
         self.chunk_x = chunk_x
         self.chunk_z = chunk_z
+        self.heightmap = None
         self.heightmap_data = None
 
         region_name = f"r.{region_x}.{region_z}"

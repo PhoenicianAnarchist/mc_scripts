@@ -7,7 +7,7 @@ import logging
 
 from common import util
 
-from mapper import level
+import mapper
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", default="./config.json", type=pathlib.Path)
@@ -53,6 +53,7 @@ logger.debug(f"json_dir == {json_dir}")
 
 output_dir = args.output_dir.expanduser().resolve()
 output_dir /= save_name
+output_dir /= "heightmaps"
 logger.debug(f"output_dir == {output_dir}")
 
 if not output_dir.exists():
@@ -65,9 +66,14 @@ if output_path.exists() and not args.force:
     sys.exit(0)
 
 logger.info(f"Generating heightmap {args.heightmap} for {save_name}")
-level_map = level.Level(
+level_map = mapper.level.Level(
     json_dir, name=args.name, region_list=args.regions, chunk_list=args.chunks
 )
+logger.debug(f"calling unpack_heightmap_data()")
+level_map.unpack_heightmap_data(args.heightmap)
+
+logger.debug(f"calling generate_colourmap()")
 level_map.generate_heightmap(args.heightmap)
+
 logger.debug(f"saving heightmap {args.heightmap} for {save_name}")
-level_map.image.save(output_path)
+level_map.heightmap.save(output_path)

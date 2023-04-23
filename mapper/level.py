@@ -63,7 +63,6 @@ class Level:
         if self.region_data is None:
             self.unpack_heightmap_data(heightmap)
 
-
         for region in self.region_data:
             region_name = f"r.{region.region_x}.{region.region_z}"
             self.logger.debug(f"Generating region {region_name}")
@@ -99,23 +98,6 @@ class Level:
             rz = (region.region_z - self.min_z) * 512
             self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
             self.colourmap.paste(region.colourmap, (rx, rz))
-
-        # for region in self.region_list:
-        #     region_name = region.name
-        #     self.logger.debug(f"Generating region {region_name}")
-        #
-        #     region_x, region_z = [int(x) for x in region_name.split(".")[1:]]
-        #
-        #     r = Region(self.json_dir, region_x, region_z, self.chunk_list)
-        #     m = r.generate_colourmap(colour_mapping, heightmap)
-        #     if m is None:
-        #         self.logger.warning(f"Skipping region {region_name}")
-        #         continue
-        #
-        #     rx = (region_x - self.min_x) * 512
-        #     rz = (region_z - self.min_z) * 512
-        #     self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
-        #     self.colourmap.paste(r.colourmap, (rx, rz))
 
     def get_map_size(self):
         self.logger.info(f"Calculating map size...")
