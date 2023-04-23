@@ -1,30 +1,10 @@
-from . import _map
-
-class Map(_map.MapBase):
+class Map:
     def __init__(self):
-        super().__init__()
-
-    def generate(self):
-        self.transparent.append("minecraft:air")
-        self.transparent.append("minecraft:cave_air") # ???
-        self.transparent.append("minecraft:glass")
-        self.transparent.append("minecraft:glass_pane")
-
-        self.map["minecraft:clay"] = (151, 160, 175)
-        self.map["minecraft:gravel"] =  (129, 127, 127)
-        self.map["minecraft:dirt"] = (185, 133, 92)
-        self.map["minecraft:grass_block"] = (72, 94, 57)
-        self.map["minecraft:water"] =  (55, 88, 152)
-        self.map["minecraft:lava"] =  (205, 66, 8)
-        self.map["minecraft:bedrock"] = (34, 34, 34)
-        self.map["minecraft:obsidian"] = (16, 12, 28)
-        self.map["minecraft:podzol"] = (74, 48, 24)
-        self.map["minecraft:sugar_cane"] = (170, 219, 166)
-
-        self.map["minecraft:torch"] = (255, 216, 0)
-        self.map["minecraft:coarse_dirt"] = (92, 65, 44)
-        self.map["minecraft:wall_torch"] = (255, 216, 0)
-        self.map["minecraft:smooth_stone_slab"] = (168, 168, 168)
+        transparent = [
+            "minecraft:air",
+            "minecraft:glass",
+            "minecraft:glass_pane"
+        ]
 
         self.grasses()
         self.woods()
@@ -41,14 +21,22 @@ class Map(_map.MapBase):
         self.amethyst()
         self.crops()
         self.villages(highlight_jobsite=False)
-        self.redstone_stuff()
-        self.monster_eggs(highlight_monster_eggs=False)
+        self.misc()
+
+    def delete(self, key):
+        self.map.pop(key)
+
+    def rename(self, key, new):
+        self.map[new] = self.map.pop(key)
 
     def grasses(self):
         for grass in [
             "grass", "tall_grass",
             "seagrass", "tall_seagrass",
-            "kelp", "kelp_plant"
+            "kelp", "kelp_plant",
+            "small_dripleaf", "big_dripleaf",
+            "vines", "cave_vines",
+            "pitcher_crop", "pitcher_plant"
         ]:
             self.map[f"minecraft:{grass}"] = (80, 149, 41)
 
@@ -72,7 +60,7 @@ class Map(_map.MapBase):
             "warped":   [( 58, 142, 140), ( 75,  39,  55), ( 49, 141, 140), ( 22, 126, 134)]
         }
 
-        for wood, [planks, log, stripped, leaves] in woods.items():
+        for wood, [planks, log, stripped, leaves] in woods.items() + nether_woods.items():
             self.map[f"minecraft:{wood}_button"] = planks
             self.map[f"minecraft:{wood}_door"] = planks
             self.map[f"minecraft:{wood}_fence"] = planks
@@ -85,6 +73,7 @@ class Map(_map.MapBase):
             self.map[f"minecraft:{wood}_stairs"] = planks
             self.map[f"minecraft:{wood}_trapdoor"] = planks
 
+        for wood, [planks, log, stripped, leaves] in woods.items():
             self.map[f"minecraft:{wood}_leaves"] = leaves
             self.map[f"minecraft:{wood}_log"] = log
             self.map[f"minecraft:{wood}_sapling"] = leaves
@@ -93,18 +82,6 @@ class Map(_map.MapBase):
             self.map[f"minecraft:stripped_{wood}_wood"] = stripped
 
         for wood, [planks, log, stripped, leaves] in nether_woods.items():
-            self.map[f"minecraft:{wood}_button"] = planks
-            self.map[f"minecraft:{wood}_door"] = planks
-            self.map[f"minecraft:{wood}_fence"] = planks
-            self.map[f"minecraft:{wood}_fence_gate"] = planks
-            self.map[f"minecraft:{wood}_hanging_sign"] = planks
-            self.map[f"minecraft:{wood}_planks"] = planks
-            self.map[f"minecraft:{wood}_pressure_plate"] = planks
-            self.map[f"minecraft:{wood}_sign"] = planks
-            self.map[f"minecraft:{wood}_slab"] = planks
-            self.map[f"minecraft:{wood}_stairs"] = planks
-            self.map[f"minecraft:{wood}_trapdoor"] = planks
-
             self.map[f"minecraft:{wood}_fungus"] = leaves
             self.map[f"minecraft:{wood}_hyphae"] = planks
             self.map[f"minecraft:{wood}_nylium"] = leaves
@@ -210,7 +187,7 @@ class Map(_map.MapBase):
         bricks = {
             "brick":                        (177,  98,  77),
             "deepslate_brick":              ( 63,  63,  63),
-            "deepslate_tile":               ( 54,  54,  54),
+            "deepslate_tile":              ( 54,  54,  54),
             "end_stone_brick":              (236, 251, 175),
             "nether_brick":                 ( 41,  21,  25),
             "mossy_stone_brick":            (122, 143,  85),
@@ -254,6 +231,7 @@ class Map(_map.MapBase):
             "tube":     ( 49,  79, 221)
         }
 
+
         for coral, colour in corals.items():
             self.map[f"minecraft:{coral}_coral"] = colour
             self.map[f"minecraft:{coral}_coral_block"] = colour
@@ -278,13 +256,11 @@ class Map(_map.MapBase):
             "iron":     (188, 153, 128),
         }
 
-        for ore, colour in ores.items():
+        for ore, colour in ores.items() + raw_ores.items():
             self.map[f"minecraft:{ore}_ore"] = colour
             self.map[f"minecraft:{ore}_block"] = colour
 
         for raw_ore, colour in raw_ores.items():
-            self.map[f"minecraft:{raw_ore}_ore"] = colour
-            self.map[f"minecraft:{raw_ore}_block"] = colour
             self.map[f"minecraft:raw_{raw_ore}_block"] = colour
 
         self.map["minecraft:nether_gold_ore"] = raw_ores["gold"]
@@ -374,9 +350,6 @@ class Map(_map.MapBase):
     def crops(self):
         self.map["minecraft:beetroot"] = (113, 21, 11)
         self.map["minecraft:carrot"] = (255, 142, 9)
-        self.map["minecraft:potato"] = (217, 170, 81)
-        self.map["minecraft:pumpkin"] = (227, 138, 29)
-        self.map["minecraft:melon"] = (82, 129, 28)
 
     def villages(self, highlight_jobsite=False):
         bell = (255, 246, 141)
@@ -384,13 +357,6 @@ class Map(_map.MapBase):
         self.map["minecraft:bell"] = bell
         self.map["minecraft:dirt_path"] = (114, 117, 64)
         self.map["minecraft:bookshelf"] = (179, 140, 81)
-        self.map["minecraft:anvil"] = (82, 82, 82)
-        self.map["minecraft:chipped_anvil"] = (82, 82, 82)
-        self.map["minecraft:damaged_anvil"] = (82, 82, 82)
-        self.map["minecraft:crafting_table"] = (174, 105, 60)
-        self.map["minecraft:farmland"] = (85, 46, 15)
-        self.map["minecraft:furnace"] = (104, 104, 104)
-        self.map["minecraft:chest"] = (167, 110, 31)
 
         if highlight_jobsite:
             self.map["minecraft:barrel"] = (139, 103, 60)
@@ -422,12 +388,12 @@ class Map(_map.MapBase):
             self.map["minecraft:stonecutter"] = bell
 
     def redstone_stuff(self):
-        self.map["minecraft:daylight_detector"] = (223, 212, 197)
-        self.map["minecraft:dispenser"] = (197, 197, 197)
-        self.map["minecraft:dropper"] = (197, 197, 197)
-        self.map["minecraft:heavy_weighted_pressure_plate"] = (188, 153, 128)
-        self.map["minecraft:light_weighted_pressure_plate"] = (252, 238,  75)
-        self.map["minecraft:hopper"] = (72, 72, 72)
+        "minecraft:daylight_detector": (223, 212, 197),
+        "minecraft:dispenser": (197, 197, 197),
+        "minecraft:dropper": (197, 197, 197),
+        "minecraft:heavy_weighted_pressure_plate": (188, 153, 128),
+        "minecraft:light_weighted_pressure_plate": (252, 238,  75),
+        "minecraft:hopper": (72, 72, 72),
 
     def monster_eggs(self, highlight_monster_eggs=False):
         highlight = (0, 255, 255)
@@ -446,3 +412,82 @@ class Map(_map.MapBase):
             self.map["minecraft:infested_cracked_stone_brick"] = (139, 139, 139)
             self.map["minecraft:infested_stone_brick"] = (139, 139, 139)
             self.map["minecraft:infested_cobblestone"] = (136, 136, 136)
+
+
+
+    def misc(self):
+
+    map = {
+        "minecraft:ancient_debris": (51, 24, 16),
+        "minecraft:anvil": (82, 82, 82),
+        "minecraft:azalea": (79, 104, 44),
+        "minecraft:azalea_leaves": (79, 104, 44),
+        "minecraft:basalt": (58, 59, 72),
+        "minecraft:beacon": (111, 227, 220),
+        "minecraft:bedrock": (34, 34, 34),
+        "minecraft:bee_nest": (217, 164, 83),
+        "minecraft:beehive": (194, 157, 98),
+        "minecraft:nether_block": (60, 50, 50),
+        "minecraft:blue_ice": (107, 157, 251),
+        "minecraft:bone_block": (233, 230, 212),
+        "minecraft:brown_mushroom_block": (148, 109, 82),
+        "minecraft:cake": (213, 200, 172),
+        calcite,
+        "minecraft:campfire": (223, 162, 27),
+        candle,
+        "minecraft:carved_pumpkin": (255, 142, 9),
+        "minecraft:chain": (62, 68, 83),
+        "minecraft:chest": (167, 110, 31),
+        "minecraft:chipped_anvil": (82, 82, 82),
+        "minecraft:chiseled_bookshelf": (179, 140, 81),
+        "minecraft:chiseled_deepslate": (84, 84, 84),
+        "minecraft:chiseled_nether_brick": (68, 36, 42),
+        "minecraft:chiseled_polished_blackstone": (49, 44, 54),
+        "minecraft:chiseled_quartz_block": (238, 234, 230),
+        "minecraft:chorus_flower": (238, 214, 238),
+        "minecraft:chorus_plant": (86, 46, 86),
+        "minecraft:clay": (151, 160, 175),
+        "minecraft:coarse_dirt": (92, 65, 44),
+        "minecraft:cobweb": (228, 233, 233),
+        "minecraft:cocoa": (130, 60, 14),
+        "minecraft:conduit": (180, 136, 107),
+        "minecraft:crafting_table": (174, 105, 60),
+        "minecraft:crying_obsidian": (131, 8, 228),
+        "minecraft:damaged_anvil": (82, 82, 82),
+        "minecraft:dead_bush": (103, 80, 44),
+        deepslate,
+        "minecraft:dragon_egg": (8, 8, 12),
+        "minecraft:dried_kelp": (24, 29, 20),
+        dripstone_block,
+        "minecraft:enchating_table": (162, 41, 41),
+        "minecraft:end_portal_frame": (184, 168, 118),
+        "minecraft:end_rod": (246, 226, 205),
+        "minecraft:endstone": (184, 168, 118),
+        ender_chest,
+        "minecraft:farmland": (85, 46, 15),
+        "minecraft:fire": (227, 171, 35),
+        "minecraft:flower_pot": (137, 76, 59),
+        flowering_azalea,
+        flowering_azalea_leaves,
+        frogspawn,
+        "minecraft:furnace": (104, 104, 104),
+        "minecraft:gilded_blackstone": (218, 145, 15),
+        glow_lichen,
+        "minecraft:glowstone": (251, 218, 116),
+        "minecraft:gravel":  (129, 127, 127),
+        hanging_roots,
+        "minecraft:hay_bale": (172, 141, 8),
+        "minecraft:honey_block": (247, 153, 9),
+        "minecraft:honeycomb_block": (232, 140, 8),
+        "minecraft:ice": (134, 174, 253),
+
+
+
+        "minecraft:obsidian": (16, 12, 28),
+        "minecraft:podzol": (74, 48, 24),
+        "minecraft:red_mushroom_block": (195, 40, 38),
+        "minecraft:packed_ice": (124, 165, 244),
+        "minecraft:dirt": (185, 133, 92),
+        "minecraft:grass_block": (72, 94, 57),
+        "minecraft:water":  (55, 88, 152),
+    }
