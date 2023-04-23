@@ -22,8 +22,6 @@ parser.add_argument("--loglevel", choices=["DEBUG", "INFO", "WARNING", "ERROR", 
 parser.add_argument("--heightmap", choices=["OCEAN_FLOOR", "WORLD_SURFACE", "MOTION_BLOCKING"], default="OCEAN_FLOOR")
 args = parser.parse_args()
 
-args.output_dir = pathlib.Path("./data/tmp")
-
 ## create log file
 util.write(args.logfile, "")
 
@@ -72,25 +70,16 @@ if args.chunks is None:
 else:
     chunk_list = args.chunks
 
-
-logger.info(f"Generating heightmap {args.heightmap} for {save_name}")
-
-region_x, region_z = [int(x) for x in args.regions[0].split(".")[1:]]
-region_map = mapper.region.Region(
-    json_dir, region_x, region_z, chunk_list=chunk_list
+logger.info(f"Generating colourmap {args.heightmap} for {save_name}")
+level_map = mapper.level.Level(
+    json_dir, name=args.name, region_list=args.regions, chunk_list=args.chunks
 )
-region_map.unpack_heightmap_data(args.heightmap)
-colourmap = mapper.colour_map.ColourMap()
-region_map.generate_colourmap(colourmap, args.heightmap)
-logger.debug(f"saving colourmap for {save_name}")
-region_map.colourmap.save(output_path)
+logger.debug(f"calling unpack_heightmap_data()")
+level_map.unpack_heightmap_data(args.heightmap)
 
-# logger.info(f"Generating heightmap {args.heightmap} for {save_name}")
-# level_map = mapper.level.Level(
-#     json_dir, name=args.name, region_list=args.regions, chunk_list=args.chunks
-# )
-# level_map.unpack_heightmap_data(args.heightmap)
-# colourmap = mapper.colour_map.ColourMap()
-# level_map.generate_colourmap(colourmap, args.heightmap)
-# logger.debug(f"saving colourmap for {save_name}")
-# level.colourmap.save(output_path)
+logger.debug(f"calling generate_colourmap()")
+colourmap = mapper.colour_map.ColourMap()
+level_map.generate_colourmap(colourmap, args.heightmap)
+
+logger.debug(f"saving colourmap for {save_name}")
+level_map.colourmap.save(output_path)

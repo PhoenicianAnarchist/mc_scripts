@@ -28,10 +28,15 @@ class Region:
 
             self.chunks.append(c)
 
+        return True
+
     def generate_heightmap(self, heightmap="OCEAN_FLOOR"):
         self.logger.info(f"Generating heightmap for region {self.region_x}, {self.region_z}")
 
         self.heightmap = Image.new("L", (512, 512))
+
+        if self.chunks is None:
+            self.unpack_heightmap_data()
 
         for chunk in self.chunks:
             chunk_name = f"{chunk.chunk_x}, {chunk.chunk_z}"
@@ -47,6 +52,9 @@ class Region:
         self.logger.info(f"Generating colourmap for region {self.region_x}, {self.region_z}")
 
         self.colourmap = Image.new("RGB", (512, 512))
+
+        if self.chunks is None:
+            self.unpack_heightmap_data()
 
         for chunk in self.chunks:
             chunk_name = f"{chunk.chunk_x}, {chunk.chunk_z}"
