@@ -30,53 +30,116 @@ class Level:
         else:
             self.chunk_list = chunk_list
 
-    def generate_heightmap(self, heightmap="OCEAN_FLOOR"):
-        img_w, img_h = self.get_map_size()
-        self.image = Image.new("L", (img_w, img_h))
-        self.logger.info(f"Generating heightmap for {self.name}")
+        self.region_data = None
 
+        self.range = None
+        self.image_width = None
+        self.image_height = None
+        self.region_x_offset = None
+        self.region_z_offset = None
+        self.calculate_map_size()
+
+    def unpack_heightmap_data(self, heightmap="OCEAN_FLOOR"):
+        self.logger.info(f"Unpacking heightmap for {self.name}")
+
+        if self.region_data is not None:
+            return
+
+        self.region_data = []
         for region in self.region_list:
             region_name = region.name
             self.logger.debug(f"Generating region {region_name}")
 
-            region_x, region_z = [int(x) for x in region_name.split(".")[1:]]
+            x, z = [int(x) for x in region.name.lstrip("r.").split(".")]
 
-            r = Region(self.json_dir, region_x, region_z, self.chunk_list)
-            m = r.generate_heightmap(heightmap)
+            r = Region(self.json_dir, x, z, self.chunk_list)
+            m = r.unpack_heightmap_data(heightmap)
             if m is None:
                 self.logger.warning(f"Skipping region {region_name}")
                 continue
 
-            rx = (region_x - self.min_x) * 512
-            rz = (region_z - self.min_z) * 512
-            self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
-            self.image.paste(r.image, (rx, rz))
+            self.region_data.append(r)
 
-    def get_map_size(self):
+        self.logger.debug(f"{len(self.region_data)} regions unpacked")
+
+    def generate_heightmap(self, heightmap="OCEAN_FLOOR"):
+        self.heightmap = Image.new("L", (self.image_width, self.image_height))
+        self.logger.info(f"Generating heightmap for {self.name}")
+
+        if self.region_data is None:
+            self.unpack_heightmap_data(heightmap)
+
+        for region in self.region_data:
+            region_name = f"r.{region.region_x}.{region.region_z}"
+            self.logger.debug(f"Generating region {region_name}")
+
+            m = region.generate_heightmap(heightmap)
+            if m is None:
+                self.logger.warning(f"Skipping region {region_name}")
+                continue
+
+            rx = (region.region_x - self.region_x_offset) * 512
+            rz = (region.region_z - self.region_z_offset) * 512
+            self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
+            self.heightmap.paste(region.heightmap, (rx, rz))
+
+    def generate_colourmap(self, colour_mapping, heightmap="OCEAN_FLOOR"):
+        self.colourmap = Image.new("RGB", (self.image_width, self.image_height))
+        self.logger.info(f"Generating heightmap for {self.name}")
+
+        if self.region_data is None:
+            self.unpack_heightmap_data(heightmap)
+
+        for region in self.region_data:
+            region_name = f"r.{region.region_x}.{region.region_z}"
+            self.logger.debug(f"Generating region {region_name}")
+
+            m = region.generate_colourmap(colour_mapping, heightmap)
+            if m is None:
+                self.logger.warning(f"Skipping region {region_name}")
+                continue
+
+            rx = (region.region_x - self.region_x_offset) * 512
+            rz = (region.region_z - self.region_z_offset) * 512
+            self.logger.debug(f"Pasting region {region_name} at {rx}, {rz}")
+            self.colourmap.paste(region.colourmap, (rx, rz))
+
+    def calculate_map_size(self):
         self.logger.info(f"Calculating map size...")
 
         region_x_coords = set()
         region_z_coords = set()
 
-        for region in self.all_regions:
-            region_x, region_z = [int(x) for x in region.name.split(".")[1:]]
-            region_x_coords.add(region_x)
-            region_z_coords.add(region_z)
+        for region in self.region_list:
+            x, z = [int(x) for x in region.name.lstrip("r.").split(".")]
+            region_x_coords.add(x)
+            region_z_coords.add(z)
 
-        self.min_x = min(region_x_coords)
-        self.min_z = min(region_z_coords)
-        self.logger.debug(f"Minimum Region {self.min_x}, {self.min_z}")
+        min_x = min(region_x_coords)
+        min_z = min(region_z_coords)
+        self.logger.debug(f"Minimum Region {min_x}, {min_z}")
 
-        self.max_x = max(region_x_coords)
-        self.max_z = max(region_z_coords)
-        self.logger.debug(f"Maximum Region {self.max_x}, {self.max_z}")
+        max_x = max(region_x_coords)
+        max_z = max(region_z_coords)
+        self.logger.debug(f"Maximum Region {max_x}, {max_z}")
 
-        self.diff_x = self.max_x - self.min_x
-        self.diff_z = self.max_z - self.min_z
-        self.logger.debug(f"Region Range {self.diff_x}, {self.diff_z}")
+        diff_x = max_x - min_x
+        diff_z = max_z - min_z
+        self.logger.debug(f"Region Range {diff_x}, {diff_z}")
 
-        img_w = (self.diff_x + 1) * 512
-        img_h = (self.diff_z + 1) * 512
+        img_w = (diff_x + 1) * 512
+        img_h = (diff_z + 1) * 512
         self.logger.debug(f"Pixels {img_w}, {img_h}")
 
-        return img_w, img_h
+        self.image_width = img_w
+        self.image_height = img_h
+        self.region_x_offset = min_x
+        self.region_z_offset = min_z
+
+        a = f"{min_x}.{min_z}"
+        b = f"{max_x}.{max_z}"
+
+        if a == b:
+            self.range = a
+        else:
+            self.range = f"{a}-{b}"
