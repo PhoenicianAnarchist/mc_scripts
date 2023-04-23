@@ -10,7 +10,7 @@ class Sections:
 
         for section_data in sections_data:
             section = Section(section_data)
-            if section.section_y is None:
+            if (section.section_y is None) or (section.section_y == -1):
                 continue
 
             section.unpack()
@@ -40,9 +40,7 @@ class Section:
             self.blockstates = data["BlockStates"]
             self.palette = data["Palette"]
         except KeyError:
-            self.logger.warning(f"No data for section {self.section_y}")
-            self.blockstates = None
-            self.palette = None
+            self.logger.debug(f"No data for section {self.section_y}")
             self.section_y = None
 
     def get(self, x, y, z):
@@ -81,20 +79,31 @@ class Section:
     def unpack(self):
         self.logger.info(f"Unpacking Section Data for Y={self.section_y}")
         bits = (len(self.palette) - 1).bit_length()
+
+        ## Minimum bit count of 4!
+        if bits < 4:
+            bits = 4
+
         mask = 2 ** bits
-        self.logger.debug(f"bits == {bits}, mask == {mask}")
+        self.logger.debug(f"palette == {len(self.palette)}, bits == {bits}, mask == {mask}")
 
         if len(self.palette) == 1:
             self.data = [0]*4096
         else:
             self.data = []
-            for long in self.blockstates:
-                self.logger.debug(f"Unpacking long {long}")
+            last_index = len(self.blockstates) - 1
+            for i, long in enumerate(self.blockstates):
+                # self.logger.debug(f"Unpacking long {long}")
                 vals = unpack_long(long, bits)
-                self.logger.debug(f"Got ints {vals}")
+                # self.logger.debug(f"Got ints {vals}")
+
+                if i == last_index:
+                    count = 4096 - len(self.data)
+                    vals = vals[:count]
+
                 self.data.extend(vals)
 
-        self.data = self.data[:4096]
+        self.logger.debug(f"blocks unpacked, {len(self.data)}")
 
         self.slices = []
         for i in range(16):
