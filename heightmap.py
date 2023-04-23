@@ -59,16 +59,17 @@ logger.debug(f"output_dir == {output_dir}")
 if not output_dir.exists():
     output_dir.mkdir(parents=True)
 
-output_path = output_dir / f"{args.heightmap}.png"
+logger.info(f"Generating heightmap {args.heightmap} for {save_name}")
+level_map = mapper.level.Level(
+    json_dir, name=args.name, region_list=args.regions, chunk_list=args.chunks
+)
+
+output_path = output_dir / f"{args.heightmap}-{level_map.range}.png"
 logger.debug(f"output_path == {output_path}")
 if output_path.exists() and not args.force:
     logger.info(f"Skipping map for {save_name}: already generated")
     sys.exit(0)
 
-logger.info(f"Generating heightmap {args.heightmap} for {save_name}")
-level_map = mapper.level.Level(
-    json_dir, name=args.name, region_list=args.regions, chunk_list=args.chunks
-)
 logger.debug(f"calling unpack_heightmap_data()")
 level_map.unpack_heightmap_data(args.heightmap)
 
